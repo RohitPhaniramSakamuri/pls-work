@@ -1,41 +1,86 @@
 #include "http_honeypot.h"
-#include "logger.h"
+#include "event_logger.h"
+#include "vuln_matrix.h"
 
-void HTTPHoneypot::setup(AsyncWebServer& server) {
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        String ip = request->client()->remoteIP().toString();
-        Logger::log(ip, "HTTP", "page_view", "/");
-        String html = "<html><head><title>Camera Control Panel</title></head><body><h1>IoT Camera Admin Panel</h1><form action='/login' method='POST'>Username: <input name='user'><br>Password: <input type='password' name='pass'><br><input type='submit' value='Login'></form></body></html>";
-        request->send(200, "text/html", html);
+static const char LOGIN_PAGE[] =
+    "<!DOCTYPE html><html><head><title>NAS Login</title>"
+    "<style>body{font-family:Arial;background:#1a1a2e;color:#eee;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}"
+    ".box{background:#16213e;padding:40px;border-radius:8px;min-width:320px}"
+    "h2{text-align:center;margin-bottom:24px}input{width:100%;padding:8px;margin:8px 0 16px;box-sizing:border-box;border-radius:4px;border:1px solid #0f3460}"
+    "button{width:100%;padding:10px;background:#0f3460;color:#fff;border:none;border-radius:4px;cursor:pointer}"
+    ".brand{text-align:center;font-size:0.8em;margin-top:16px;opacity:0.5}</style></head>"
+    "<body><div class='box'><h2>Network Storage Device</h2>"
+    "<form method='POST' action='/login'>"
+    "<label>Username</label><input name='user' type='text' autocomplete='off'>"
+    "<label>Password</label><input name='pass' type='password'>"
+    "<button type='submit'>Login</button></form>"
+    "<div class='brand'>SynoDisk DS218+ v6.2.3</div></div></body></html>";
+
+static const char ADMIN_PAGE[] =
+    "<!DOCTYPE html><html><head><title>Admin Panel</title></head>"
+    "<body><h1>Device Administration</h1>"
+    "<p>Firmware: 3.10.0 | Storage: 2TB | Status: Online</p>"
+    "<ul><li><a href='/admin/logs'>System Logs</a></li>"
+    "<li><a href='/admin/network'>Network Settings</a></li>"
+    "<li><a href='/admin/users'>User Management</a></li></ul>"
+    "</body></html>";
+
+void HTTPHoneypot::begin(AsyncWebServer& server) {
+    // GET / → redirect to login
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest* req) {
+        req->redirect("/login");
     });
 
-    server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request){
-        String ip = request->client()->remoteIP().toString();
-        String user = request->hasParam("user", true) ? request->getParam("user", true)->value() : "";
-        String pass = request->hasParam("pass", true) ? request->getParam("pass", true)->value() : "";
-        String payload = "{\"user\":\"" + user + "\", \"pass\":\"" + pass + "\"}";
-        Logger::log(ip, "HTTP", "login_attempt", payload);
-        request->send(200, "text/plain", "Login successful");
+    // GET /login
+    server.on("/login", HTTP_GET, [](AsyncWebServerRequest* req) {
+        String ip = req->client()->remoteIP().toString();
+        EventLogger::logEvent("http", ip.c_str(), "", "", "GET /login", "connect");
+        req->send(200, "text/html", LOGIN_PAGE);
     });
 
-    server.on("/config", HTTP_GET, [](AsyncWebServerRequest *request){
-        String ip = request->client()->remoteIP().toString();
-        String params = "{";
-        for (size_t i = 0; i < request->params(); i++) {
-            AsyncWebParameter* p = request->getParam(i);
-            params += "\"" + p->name() + "\":\"" + p->value() + "\"";
-            if (i < request->params() - 1) params += ",";
+    // POST /login — log credentials
+    server.on("/login", HTTP_POST, [](AsyncWebServerRequest* req) {
+        String ip   = req->client()->remoteIP().toString();
+        String user = req->hasParam("user", true) ? req->getParam("user", true)->value() : "";
+        String pass = req->hasParam("pass", true) ? req->getParam("pass", true)->value() : "";
+
+        EventLogger::logEvent("http", ip.c_str(), user.c_str(), pass.c_str(), "POST /login", "auth_attempt");
+
+        if (isMiraiCred(user.c_str(), pass.c_str())) {
+            EventLogger::logEvent("http", ip.c_str(), user.c_str(), pass.c_str(), "POST /login", "auth_success");
+            req->redirect("/admin");
+        } else {
+            req->send(200, "text/html",
+                "<html><body><p>Invalid password</p><a href='/login'>Try again</a></body></html>");
         }
-        params += "}";
-        Logger::log(ip, "HTTP", "config_access", params);
-        request->send(200, "application/json", "{\"status\":\"ok\"}");
     });
 
-    server.onNotFound([](AsyncWebServerRequest *request){
-        String ip = request->client()->remoteIP().toString();
-        String url = request->url();
-        if (url.indexOf("../") != -1) Logger::log(ip, "HTTP", "traversal_attempt", url);
-        else Logger::log(ip, "HTTP", "not_found", url);
-        request->send(404, "text/plain", "Not Found");
+    // GET /admin
+    server.on("/admin", HTTP_GET, [](AsyncWebServerRequest* req) {
+        String ip = req->client()->remoteIP().toString();
+        EventLogger::logEvent("http", ip.c_str(), "", "", "GET /admin", "command");
+        req->send(200, "text/html", ADMIN_PAGE);
     });
+
+    // GET /cgi-bin/* — triggers exploit scanners
+    server.on("/cgi-bin/", HTTP_GET, [](AsyncWebServerRequest* req) {
+        String ip = req->client()->remoteIP().toString();
+        EventLogger::logEvent("http", ip.c_str(), "", "", req->url().c_str(), "exploit");
+        req->send(200, "text/plain", "");
+    });
+
+    // Catch-all — traversal detection + 404 logging
+    server.onNotFound([](AsyncWebServerRequest* req) {
+        String ip  = req->client()->remoteIP().toString();
+        String url = req->url();
+        if (url.indexOf("..") != -1 || url.indexOf("%2e%2e") != -1) {
+            EventLogger::logEvent("http", ip.c_str(), "", "", url.c_str(), "exploit");
+        } else {
+            EventLogger::logEvent("http", ip.c_str(), "", "", url.c_str(), "connect");
+        }
+        req->send(404, "text/plain", "Not Found");
+    });
+
+    server.begin();
+    Serial.println("[HTTP] Listening on port 80");
 }

@@ -5,8 +5,12 @@
 
 class WiFiManager {
 public:
-    static void setup(const char* ssid, const char* password);
+    static void begin(const char* ssid, const char* password);
     static bool isConnected();
+    static void reconnectLoop(); // call from loop() for watchdog reconnect
+private:
+    static const char* _ssid;
+    static const char* _password;
 };
 
-#endif
+#endif // WIFI_MANAGER_H

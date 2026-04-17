@@ -2,14 +2,13 @@
 #define SSH_HONEYPOT_H
 
 #include <WiFiServer.h>
-#include <vector>
 
 class SSHHoneypot {
 public:
-    static void setup(int port);
+    static void begin(int port);
     static void loop();
 private:
-    static WiFiServer* server;
+    static WiFiServer* _server;
 };
 
-#endif
+#endif // SSH_HONEYPOT_H

@@ -5,7 +5,7 @@
 
 class HTTPHoneypot {
 public:
-    static void setup(AsyncWebServer& server);
+    static void begin(AsyncWebServer& server);
 };
 
-#endif
+#endif // HTTP_HONEYPOT_H

@@ -1,0 +1,292 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {"type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.4.0"},
+    {"type": "datasource", "id": "influxdb", "name": "InfluxDB", "version": "1.0.0"}
+  ],
+  "annotations": {"list": []},
+  "description": "Phase 2 — 47-Pattern Attack Taxonomy",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 10},
+            {"color": "red", "value": 50}
+          ]},
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "area"},
+      "title": "Unique Patterns Seen (24h)",
+      "type": "stat",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\") |> group(columns: [\"pattern_id\"]) |> count() |> group() |> count()",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 100},
+            {"color": "red", "value": 500}
+          ]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+      "id": 2,
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "area"},
+      "title": "Total Classified (24h)",
+      "type": "stat",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\") |> count()",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "red", "value": 1}
+          ]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+      "id": 3,
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto", "textMode": "auto", "colorMode": "background"},
+      "title": "Zero-Day Anomalies (24h)",
+      "type": "stat",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\" and r.pattern_id == \"47\") |> count()",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "continuous-BlPu"},
+          "custom": {"lineWidth": 1, "fillOpacity": 20}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 4,
+      "options": {
+        "tooltip": {"mode": "multi"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "title": "Pattern Detection Rate (time series, 6h)",
+      "type": "timeseries",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -6h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\") |> aggregateWindow(every: 5m, fn: count) |> group(columns: [\"group\"])",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {"unit": "percentunit", "min": 0, "max": 1,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "blue", "value": null},
+            {"color": "yellow", "value": 0.6},
+            {"color": "red", "value": 0.85}
+          ]},
+          "custom": {"displayMode": "gradient-gauge"}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "id": 5,
+      "options": {"orientation": "horizontal", "reduceOptions": {"calcs": ["mean"]}, "displayMode": "gradient"},
+      "title": "Mean Confidence by Pattern Group",
+      "type": "bargauge",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\") |> group(columns: [\"group\"]) |> mean()",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "confidence"}, "properties": [{"id": "custom.displayMode", "value": "color-background"}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "blue", "value": null}, {"color": "yellow", "value": 0.6}, {"color": "red", "value": 0.85}]}}]},
+          {"matcher": {"id": "byName", "options": "count"}, "properties": [{"id": "custom.displayMode", "value": "gradient-gauge"}, {"id": "custom.width", "value": 120}]}
+        ]
+      },
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 12},
+      "id": 6,
+      "options": {"footer": {"show": false}, "sortBy": [{"desc": true, "displayName": "count"}]},
+      "title": "Top Attack Patterns (24h)",
+      "type": "table",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\") |> group(columns: [\"pattern_name\", \"group\", \"botnet_family\", \"mitre_technique\"]) |> count() |> rename(columns: {_value: \"count\"}) |> group()",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 10, "w": 6, "x": 12, "y": 8},
+      "id": 7,
+      "options": {
+        "pieType": "donut",
+        "tooltip": {"mode": "single"},
+        "legend": {"displayMode": "table", "placement": "right", "values": ["percent"]}
+      },
+      "title": "Botnet Family Distribution (24h)",
+      "type": "piechart",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\") |> group(columns: [\"botnet_family\"]) |> count()",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 10, "w": 6, "x": 18, "y": 8},
+      "id": 8,
+      "options": {
+        "pieType": "pie",
+        "tooltip": {"mode": "single"},
+        "legend": {"displayMode": "table", "placement": "right", "values": ["percent"]}
+      },
+      "title": "MITRE ATT&CK Technique Distribution (24h)",
+      "type": "piechart",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\") |> group(columns: [\"mitre_technique\"]) |> count()",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 18},
+      "id": 9,
+      "options": {"footer": {"show": false}},
+      "title": "Zero-Day Anomaly Feed",
+      "type": "table",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"classified_events\" and r._field == \"confidence\" and r.pattern_id == \"47\") |> sort(columns: [\"_time\"], desc: true) |> limit(n: 50)",
+        "refId": "A"
+      }]
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"align": "auto", "displayMode": "auto", "filterable": true}
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "confidence"}, "properties": [{"id": "custom.displayMode", "value": "color-background"}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "blue", "value": null}, {"color": "yellow", "value": 0.6}, {"color": "red", "value": 0.85}]}}]}
+        ]
+      },
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 22},
+      "id": 10,
+      "options": {"footer": {"show": false}, "sortBy": [{"desc": true, "displayName": "_time"}]},
+      "title": "Kill-Chain Timeline (recent classified events)",
+      "type": "table",
+      "targets": [{
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "query": "from(bucket: \"attacks\") |> range(start: -6h) |> filter(fn: (r) => r._measurement == \"classified_events\") |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") |> sort(columns: [\"_time\"], desc: true) |> limit(n: 100)",
+        "refId": "A"
+      }]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["honeypot", "phase2", "patterns"],
+  "templating": {
+    "list": [
+      {
+        "current": {"selected": false, "text": "All", "value": "$__all"},
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "definition": "from(bucket:\"attacks\") |> range(start:-24h) |> filter(fn:(r)=>r._measurement==\"classified_events\" and r._field==\"confidence\") |> group(columns:[\"pattern_name\"]) |> distinct(column:\"pattern_name\")",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "pattern",
+        "options": [],
+        "query": "from(bucket:\"attacks\") |> range(start:-24h) |> filter(fn:(r)=>r._measurement==\"classified_events\" and r._field==\"confidence\") |> group(columns:[\"pattern_name\"]) |> distinct(column:\"pattern_name\")",
+        "refresh": 2,
+        "type": "query",
+        "label": "Pattern"
+      },
+      {
+        "current": {"selected": false, "text": "All", "value": "$__all"},
+        "datasource": {"type": "influxdb", "uid": "efj3ikja6"},
+        "definition": "from(bucket:\"attacks\") |> range(start:-24h) |> filter(fn:(r)=>r._measurement==\"classified_events\" and r._field==\"confidence\") |> group(columns:[\"group\"]) |> distinct(column:\"group\")",
+        "hide": 0,
+        "includeAll": true,
+        "multi": false,
+        "name": "group",
+        "options": [],
+        "query": "from(bucket:\"attacks\") |> range(start:-24h) |> filter(fn:(r)=>r._measurement==\"classified_events\" and r._field==\"confidence\") |> group(columns:[\"group\"]) |> distinct(column:\"group\")",
+        "refresh": 2,
+        "type": "query",
+        "label": "Group"
+      }
+    ]
+  },
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Honeypot — Attack Pattern Taxonomy",
+  "uid": "honeypot-patterns-v2",
+  "version": 1
+}
