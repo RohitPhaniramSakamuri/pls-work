@@ -368,5 +368,5 @@ The session is complete only when ALL five checks return success.
 - At session end, print the five validation check commands and their results
 
 WIFI CREDENTIALS:
-WIFI (hotspot) name: 'IQOO Z7 Pro'
+WIFI (hotspot) name: 'ZONGLE'
 Password: '12345678'

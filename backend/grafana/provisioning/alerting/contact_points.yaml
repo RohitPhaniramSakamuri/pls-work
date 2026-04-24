@@ -1,0 +1,20 @@
+apiVersion: 1
+
+# Contact points for honeypot alert notifications.
+# Webhook fires to localhost:9999 — replace with your Slack/Teams/PagerDuty URL
+# or configure GF_ALERTING_NOTIFICATION_CHANNELS in docker-compose.yml.
+contactPoints:
+  - orgId: 1
+    name: Honeypot-Webhook
+    receivers:
+      - uid: honeypot-webhook-recv
+        type: webhook
+        settings:
+          url: "http://host.docker.internal:9999/alerts"
+          httpMethod: POST
+          title: "Honeypot Alert: {{ .CommonLabels.alertname }}"
+          message: |
+            Alert: {{ .CommonLabels.alertname }}
+            Severity: {{ .CommonLabels.severity }}
+            {{ .CommonAnnotations.summary }}
+        disableResolveMessage: false

@@ -10,8 +10,7 @@
             "includePath": [
                 "/home/sakamuri/Documents/Cfiles/honeypot/include",
                 "/home/sakamuri/Documents/Cfiles/honeypot/src",
-                "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
-                "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
+                "/home/sakamuri/Documents/Cfiles/honeypot/.pio/libdeps/esp32dev/Nanopb",
                 "/home/sakamuri/Documents/Cfiles/honeypot/.pio/libdeps/esp32dev/ESPAsyncWebServer-esphome/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
@@ -224,6 +223,7 @@
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/ESPmDNS/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/Ethernet/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/FFat/src",
+                "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdateServer/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/I2S/src",
@@ -241,6 +241,7 @@
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/USB/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
+                "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
                 "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 ""
@@ -250,8 +251,7 @@
                 "path": [
                     "/home/sakamuri/Documents/Cfiles/honeypot/include",
                     "/home/sakamuri/Documents/Cfiles/honeypot/src",
-                    "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
-                    "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
+                    "/home/sakamuri/Documents/Cfiles/honeypot/.pio/libdeps/esp32dev/Nanopb",
                     "/home/sakamuri/Documents/Cfiles/honeypot/.pio/libdeps/esp32dev/ESPAsyncWebServer-esphome/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
@@ -464,6 +464,7 @@
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/ESPmDNS/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/Ethernet/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/FFat/src",
+                    "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdateServer/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/I2S/src",
@@ -481,6 +482,7 @@
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/USB/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
+                    "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
                     "/home/sakamuri/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     ""

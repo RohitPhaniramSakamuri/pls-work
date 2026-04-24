@@ -23,7 +23,9 @@ from pydantic import BaseModel
 
 from anomaly_detector import classify_anomaly, run_dbscan_if_due
 from hawkes_classifier import classify_all_ips
+from hmm_classifier import classify_sessions_hmm
 from heuristic_rules import classify
+from geoip_enricher import enrich_batch
 from influx_client import (
     fetch_ip_timestamps,
     fetch_pattern_summary,
@@ -47,6 +49,7 @@ def _classify_batch() -> None:
         if not sessions:
             return
 
+        # ── Step 1: Heuristic + anomaly classification ─────────────────────
         enriched: List[Dict[str, Any]] = []
         for s in sessions:
             pid, conf = classify(s)
@@ -67,17 +70,40 @@ def _classify_batch() -> None:
                 "mitre_technique":pat.mitre_technique if pat else "",
             })
 
+        # ── Step 2: HMM multi-stage sequence analysis ──────────────────────
+        hmm_results = classify_sessions_hmm(sessions, group_by="session_id")
+        if hmm_results:
+            log.info(f"  HMM classified {len(hmm_results)} sessions")
+            # Overlay HMM result where it increases confidence
+            for row in enriched:
+                key = str(row.get("session_id", ""))
+                if key in hmm_results:
+                    hmm_pid, hmm_conf = hmm_results[key]
+                    if hmm_conf > float(row.get("confidence", 0)):
+                        pat = PATTERNS.get(int(hmm_pid))
+                        row["pattern_id"]      = int(hmm_pid)
+                        row["pattern_name"]    = pat.name            if pat else "UNKNOWN"
+                        row["group"]           = pat.group           if pat else "?"
+                        row["confidence"]      = hmm_conf
+                        row["botnet_family"]   = pat.botnet_family   if pat else ""
+                        row["mitre_technique"] = pat.mitre_technique if pat else ""
+                        row["hmm_classified"]  = True
+
+        # ── Step 3: GeoIP enrichment + IP hashing ──────────────────────────
+        enriched = enrich_batch(enriched)
+        log.info(f"  GeoIP/hash enrichment done for {len(enriched)} records")
+
         write_classifications(enriched)
         log.info(f"  Wrote {len(enriched)} enriched records")
 
-        # Group E: Hawkes timing
+        # ── Step 4: Group E Hawkes timing ───────────────────────────────────
         ip_ts = fetch_ip_timestamps(window_hours=2)
         timing_results = classify_all_ips(ip_ts)
         if timing_results:
             write_timing_classifications(timing_results)
             log.info(f"  Timing classifications: {len(timing_results)}")
 
-        # Periodic DBSCAN
+        # ── Step 5: Periodic DBSCAN ─────────────────────────────────────────
         outliers = run_dbscan_if_due()
         if outliers:
             log.info(f"  DBSCAN outlier indices: {outliers}")

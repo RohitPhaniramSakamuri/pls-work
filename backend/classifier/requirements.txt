@@ -4,3 +4,7 @@ apscheduler==3.10.4
 influxdb-client==1.44.0
 numpy==1.26.4
 scipy==1.13.0
+scikit-learn==1.4.2
+hmmlearn==0.3.3
+requests==2.32.3
+geoip2==4.8.0

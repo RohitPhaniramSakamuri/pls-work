@@ -10,8 +10,8 @@ GRAFANA_URL="http://localhost:3000"
 PASS=0
 FAIL=0
 
-ok()   { echo "[PASS] $*"; ((PASS++)); }
-fail() { echo "[FAIL] $*"; ((FAIL++)); }
+ok()   { echo "[PASS] $*"; PASS=$((PASS+1)); }
+fail() { echo "[FAIL] $*"; FAIL=$((FAIL+1)); }
 
 # ─── 1. Docker services ───────────────────────────────────────────────────────
 echo "=== Checking Docker services ==="
@@ -27,7 +27,7 @@ done
 # ─── 2. MQTT broker reachable ─────────────────────────────────────────────────
 echo ""
 echo "=== MQTT broker ==="
-if mosquitto_pub -h localhost -p 1883 -t "honeypot/check" -m "ping" -q 0 2>/dev/null; then
+if docker exec honeypot_mosquitto mosquitto_pub -h localhost -p 1883 -t "honeypot/check" -m "ping" -q 0 2>/dev/null; then
     ok "MQTT broker accepts publishes on :1883"
 else
     fail "MQTT broker unreachable on :1883"

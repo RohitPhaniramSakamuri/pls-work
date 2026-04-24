@@ -1,0 +1,290 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Honeypot-Critical
+    folder: Honeypot
+    interval: 1m
+    rules:
+
+      # ── Rule 1: Attack rate spike ────────────────────────────────────────────
+      - uid: hp-alert-rate-spike
+        title: Attack Rate Spike
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300   # last 5 min
+              to: 0
+            datasourceUid: influxdb-honeypot
+            model:
+              query: |
+                from(bucket: "attacks")
+                  |> range(start: -5m)
+                  |> filter(fn: (r) => r._measurement == "mqtt_consumer")
+                  |> filter(fn: (r) => r._field == "ts")
+                  |> count()
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator:
+                    params: [300]   # >300 events in 5 min = 60/min threshold
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: "Attack rate exceeds 60 events/min ({{ $values.A.Value }} events in 5 min)"
+          description: "Sustained high attack rate detected. Possible DDoS-source or coordinated scan."
+        labels:
+          severity: warning
+          team: security
+
+      # ── Rule 2: Successful authentication ────────────────────────────────────
+      - uid: hp-alert-auth-success
+        title: Honeypot Authentication Success
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: influxdb-honeypot
+            model:
+              query: |
+                from(bucket: "attacks")
+                  |> range(start: -2m)
+                  |> filter(fn: (r) => r._measurement == "mqtt_consumer")
+                  |> filter(fn: (r) => r.evt == "auth_success")
+                  |> count()
+          - refId: C
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: "Attacker authenticated successfully — post-exploitation likely imminent"
+          description: "An attacker has authenticated using valid credentials. Monitor for command execution events."
+        labels:
+          severity: critical
+          team: security
+
+      # ── Rule 3: High-confidence exploit detected ──────────────────────────────
+      - uid: hp-alert-exploit-detected
+        title: High-Confidence Exploit Attempt
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: influxdb-honeypot
+            model:
+              query: |
+                from(bucket: "attacks")
+                  |> range(start: -5m)
+                  |> filter(fn: (r) => r._measurement == "classified_events")
+                  |> filter(fn: (r) => r.group == "C" or r.group == "D")
+                  |> filter(fn: (r) => r._field == "confidence")
+                  |> filter(fn: (r) => r._value >= 0.85)
+                  |> count()
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: "Exploit attempt classified with ≥85% confidence (Group C/D)"
+          description: "CVE exploit or post-exploitation command detected. Check command logs immediately."
+        labels:
+          severity: critical
+          team: security
+
+      # ── Rule 4: ESP32 node offline (heartbeat missing) ────────────────────────
+      - uid: hp-alert-node-offline
+        title: Honeypot Node Offline
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 180
+              to: 0
+            datasourceUid: influxdb-honeypot
+            model:
+              query: |
+                from(bucket: "attacks")
+                  |> range(start: -3m)
+                  |> filter(fn: (r) => r._measurement == "mqtt_consumer")
+                  |> filter(fn: (r) => r.evt == "heartbeat")
+                  |> count()
+          - refId: C
+            relativeTimeRange:
+              from: 180
+              to: 0
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+              type: classic_conditions
+        noDataState: Alerting   # No data = node is offline
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "No heartbeat received from ESP32 node in 3+ minutes"
+          description: "Honeypot node may have rebooted, lost Wi-Fi, or been disconnected. Check serial monitor."
+        labels:
+          severity: warning
+          team: ops
+
+      # ── Rule 5: New botnet family observed ────────────────────────────────────
+      - uid: hp-alert-new-botnet
+        title: New Botnet Family Detected
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: influxdb-honeypot
+            model:
+              query: |
+                from(bucket: "attacks")
+                  |> range(start: -1h)
+                  |> filter(fn: (r) => r._measurement == "classified_events")
+                  |> filter(fn: (r) => r._field == "confidence")
+                  |> filter(fn: (r) => r.botnet_family != "Unknown" and r.botnet_family != "Generic")
+                  |> group(columns: ["botnet_family"])
+                  |> count()
+                  |> group()
+                  |> count()
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator:
+                    params: [3]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: "Multiple distinct botnet families active in the last hour"
+          description: "Coordinated multi-family attack campaign may be underway."
+        labels:
+          severity: warning
+          team: security
+
+  - orgId: 1
+    name: Honeypot-Performance
+    folder: Honeypot
+    interval: 5m
+    rules:
+
+      # ── Rule 6: Memory pressure on ESP32 ─────────────────────────────────────
+      - uid: hp-alert-mem-pressure
+        title: ESP32 Low Free Heap
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: influxdb-honeypot
+            model:
+              query: |
+                from(bucket: "attacks")
+                  |> range(start: -2m)
+                  |> filter(fn: (r) => r._measurement == "mqtt_consumer")
+                  |> filter(fn: (r) => r._field == "free_heap")
+                  |> last()
+          - refId: C
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator:
+                    params: [40000]   # <40KB free heap is critical on ESP32
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "ESP32 free heap below 40KB — reboot risk ({{ $values.A.Value }} bytes free)"
+          description: "Sustained low memory may cause connection drops or OOM reboot."
+        labels:
+          severity: warning
+          team: ops

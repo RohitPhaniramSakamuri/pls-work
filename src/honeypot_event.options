@@ -1,0 +1,14 @@
+# nanopb field-size options for HoneypotEventPb
+# Matches the C struct sizes in event_logger.h exactly.
+HoneypotEventPb.proto              max_size:8
+HoneypotEventPb.src_ip             max_size:16
+HoneypotEventPb.username           max_size:32
+HoneypotEventPb.password           max_size:32
+HoneypotEventPb.command            max_size:128
+HoneypotEventPb.event_type         max_size:24
+HoneypotEventPb.node               max_size:16
+HoneypotEventPb.pattern_name       max_size:36
+HoneypotEventPb.pattern_group      max_size:4
+HoneypotEventPb.session_id         max_size:8
+HoneypotEventPb.botnet_family      max_size:20
+HoneypotEventPb.mitre_technique    max_size:12

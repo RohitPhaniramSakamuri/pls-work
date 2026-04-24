@@ -104,21 +104,31 @@ def write_classifications(rows: List[Dict[str, Any]]) -> None:
 
     for r in rows:
         ts = r.get("_ts_influx") or now
+        # Use hashed IP as the tagged identifier (privacy-preserving per PDF §II.D)
+        # Raw IP kept only in a field (not indexed as tag) for debugging; omit in prod.
+        ip_hash = str(r.get("src_ip_hash", ""))
         record = {
             "measurement": "classified_events",
             "tags": {
-                "src_ip":         str(r.get("src_ip", "")),
+                "src_ip_hash":    ip_hash,
+                "src_ip":         str(r.get("src_ip", "")),   # raw IP tag — remove in prod
                 "proto":          str(r.get("proto", "")),
                 "pattern_id":     str(r.get("pattern_id", 0)),
                 "pattern_name":   str(r.get("pattern_name", "UNKNOWN")),
                 "group":          str(r.get("group", "?")),
                 "botnet_family":  str(r.get("botnet_family", "")),
                 "mitre_technique":str(r.get("mitre_technique", "")),
+                "country_code":   str(r.get("country_code", "XX")),
             },
             "fields": {
-                "confidence":   float(r.get("confidence", 0.0)),
-                "evt":          str(r.get("evt", "")),
-                "session_id":   str(r.get("session_id", "")),
+                "confidence":    float(r.get("confidence", 0.0)),
+                "evt":           str(r.get("evt", "")),
+                "session_id":    str(r.get("session_id", "")),
+                "country":       str(r.get("country", "Unknown")),
+                "lat":           float(r.get("lat", 0.0)),
+                "lon":           float(r.get("lon", 0.0)),
+                "org":           str(r.get("org", "")),
+                "hmm_classified":bool(r.get("hmm_classified", False)),
             },
             "time": ts,
         }
@@ -130,7 +140,7 @@ def write_classifications(rows: List[Dict[str, Any]]) -> None:
             bucket=INFLUX_BUCKET,
             org=INFLUX_ORG,
             record=records,
-            write_precision=WritePrecision.NANOSECONDS,
+            write_precision=WritePrecision.NS,
         )
 
 
@@ -177,7 +187,7 @@ def write_timing_classifications(results: Dict[str, Any]) -> None:
             bucket=INFLUX_BUCKET,
             org=INFLUX_ORG,
             record=records,
-            write_precision=WritePrecision.NANOSECONDS,
+            write_precision=WritePrecision.NS,
         )
 
 

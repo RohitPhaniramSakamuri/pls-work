@@ -7,6 +7,7 @@
 #include "http_honeypot.h"
 #include "telnet_honeypot.h"
 #include "ssh_honeypot.h"
+#include "tls_honeypot.h"
 
 static AsyncWebServer httpServer(80);
 static unsigned long lastIpPrint = 0;
@@ -35,6 +36,9 @@ void setup() {
     // 6. SSH emulator (port 22)
     SSHHoneypot::begin(22);
 
+    // 7. TLS honeypot (port 443) — weak cipher injection: RC4-SHA, 3DES, NULL
+    TLSHoneypot::begin(443);
+
     EventLogger::logEvent("system", "0.0.0.0", "", "", "boot", "connect");
     Serial.println("=== All services started ===");
 }
@@ -49,6 +53,7 @@ void loop() {
     // Protocol honeypots
     TelnetHoneypot::loop();
     SSHHoneypot::loop();
+    TLSHoneypot::loop();
 
     // Periodic event flush + heartbeat
     EventLogger::loop();

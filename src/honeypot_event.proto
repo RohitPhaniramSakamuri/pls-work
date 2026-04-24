@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+// HoneypotEvent — compact binary encoding for ESP32 → MQTT → backend
+// nanopb options file (honeypot_event.options) constrains string sizes.
+message HoneypotEventPb {
+    uint32 timestamp          = 1;
+    string proto              = 2;
+    string src_ip             = 3;
+    string username           = 4;
+    string password           = 5;
+    string command            = 6;
+    string event_type         = 7;
+    string node               = 8;
+    uint32 pattern_id         = 9;
+    string pattern_name       = 10;
+    string pattern_group      = 11;
+    uint32 confidence         = 12;
+    string session_id         = 13;
+    uint32 attempt_num        = 14;
+    uint32 session_duration_ms = 15;
+    string botnet_family      = 16;
+    string mitre_technique    = 17;
+}
