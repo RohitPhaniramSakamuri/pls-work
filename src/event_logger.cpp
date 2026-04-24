@@ -178,9 +178,6 @@ bool EventLogger::_publishEvent(const HoneypotEvent& ev) {
     size_t n = serializeJson(doc, payload, sizeof(payload));
     bool ok = mqttClient.publish(topic, payload, n);
 
-    // Secondary: Protobuf binary (parallel topic, future consumers)
-    _publishProtobuf(ev);
-
     if (ok) { _mqttBackoff = 1000; }
     else    { _mqttBackoff = min(_mqttBackoff * 2, (unsigned long)30000); }
     return ok;
