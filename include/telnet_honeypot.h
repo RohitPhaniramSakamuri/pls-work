@@ -23,6 +23,10 @@ class TelnetHoneypot {
 public:
     static void begin(int port);
     static void loop();
+
+    static bool isOccupied() {
+        return _clientCount > 0;
+    }
 private:
     static WiFiServer* _server;
     static TelnetClient _clients[5];

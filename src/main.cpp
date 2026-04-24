@@ -20,6 +20,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 void setup() {
     Serial.begin(115200);
     pinMode(2, OUTPUT);
+    pinMode(18, OUTPUT);
     delay(1000);
     Serial.println("=== ESP32 IoT Honeypot v2.0 ===");
 
@@ -76,6 +77,19 @@ void loop() {
 
     // Periodic event flush + heartbeat
     EventLogger::loop();
+
+    if (TelnetHoneypot::isOccupied()) {
+        digitalWrite(18, HIGH);
+
+        // lcd.setCursor(0, 0);
+        // lcd.print("!! TELNET HIT !!");
+
+    } else {
+        digitalWrite(18, LOW);
+        //
+        // lcd.setCursor(0, 0);
+        // lcd.print("Honeypot Online ");
+    }
 
     // Periodic IP print for serial monitor
     if (millis() - lastIpPrint > 10000) {
