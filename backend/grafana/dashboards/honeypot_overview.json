@@ -949,7 +949,7 @@
             "type": "influxdb",
             "uid": "efj3ikja6"
           },
-          "query": "from(bucket: \"attacks\")\n  |> range(start: -6h)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"attempt_num\")\n  |> group(columns: [\"proto\"])\n  |> count()\n  |> group()\n  |> keep(columns: [\"proto\",\"_value\"])",
+          "query": "from(bucket: \"attacks\")\n  |> range(start: -6h)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"attempt_num\")\n  |> group(columns: [\"proto\"])\n  |> count()\n  |> map(fn: (r) => ({r with _field: r.proto}))\n  |> group(columns: [\"_field\"])",
           "refId": "A"
         }
       ]
@@ -1073,7 +1073,7 @@
             "type": "influxdb",
             "uid": "efj3ikja6"
           },
-          "query": "from(bucket: \"attacks\")\n  |> range(start: -6h)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"attempt_num\")\n  |> group(columns: [\"evt\"])\n  |> count()\n  |> group()\n  |> keep(columns: [\"evt\",\"_value\"])",
+          "query": "from(bucket: \"attacks\")\n  |> range(start: -6h)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"attempt_num\")\n  |> group(columns: [\"evt\"])\n  |> count()\n  |> map(fn: (r) => ({r with _field: r.evt}))\n  |> group(columns: [\"_field\"])",
           "refId": "A"
         }
       ]
@@ -1121,7 +1121,7 @@
             "type": "influxdb",
             "uid": "efj3ikja6"
           },
-          "query": "from(bucket: \"attacks\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"botnet_family\")\n  |> filter(fn: (r) => r._value != \"\" and r._value != \"0\")\n  |> map(fn: (r) => ({r with family: r._value}))\n  |> group(columns: [\"family\"])\n  |> count()\n  |> group()\n  |> keep(columns: [\"family\",\"_value\"])",
+          "query": "from(bucket: \"attacks\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"botnet_family\")\n  |> filter(fn: (r) => r._value != \"\" and r._value != \"0\")\n  |> map(fn: (r) => ({r with _field: r._value, _value: 1}))\n  |> group(columns: [\"_field\"])\n  |> sum()",
           "refId": "A"
         }
       ]
@@ -1169,7 +1169,7 @@
             "type": "influxdb",
             "uid": "efj3ikja6"
           },
-          "query": "from(bucket: \"attacks\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"mitre_technique\")\n  |> filter(fn: (r) => r._value != \"\" and r._value != \"0\")\n  |> map(fn: (r) => ({r with tech: r._value}))\n  |> group(columns: [\"tech\"])\n  |> count()\n  |> group()\n  |> keep(columns: [\"tech\",\"_value\"])",
+          "query": "from(bucket: \"attacks\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"mitre_technique\")\n  |> filter(fn: (r) => r._value != \"\" and r._value != \"0\")\n  |> map(fn: (r) => ({r with _field: r._value, _value: 1}))\n  |> group(columns: [\"_field\"])\n  |> sum()",
           "refId": "A"
         }
       ]
