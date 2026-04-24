@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
+#include <esp32-hal-gpio.h>
 #include "secrets.h"
 #include "wifi_manager.h"
 #include "event_logger.h"
@@ -14,6 +15,7 @@ static unsigned long lastIpPrint = 0;
 
 void setup() {
     Serial.begin(115200);
+    pinMode(2, OUTPUT);
     delay(1000);
     Serial.println("=== ESP32 IoT Honeypot v2.0 ===");
 
@@ -41,6 +43,7 @@ void setup() {
 
     EventLogger::logEvent("system", "0.0.0.0", "", "", "boot", "connect");
     Serial.println("=== All services started ===");
+    digitalWrite(2, HIGH);
 }
 
 void loop() {
